@@ -165,3 +165,53 @@ export async function addApplication(prevState: any, formData: FormData) {
      return { message: error.message || 'Failed to add application', errors: {} };
   }
 }
+
+export async function updateApplication(prevState: any, formData: FormData) {
+  const appId = formData.get('id') as string;
+  const appName = formData.get('app_name') as string;
+  const storagePath = formData.get('storage_path') as string;
+
+  if (!appId) {
+    return { message: 'Application ID is missing.', errors: {} };
+  }
+
+  try {
+    const validatedFields = appSchema.safeParse({
+      app_name: appName,
+      storage_path: storagePath,
+    });
+
+    if (!validatedFields.success) {
+      return {
+        message: 'Validation failed',
+        errors: validatedFields.error.flatten().fieldErrors,
+      };
+    }
+
+    const pathCheck = await checkStoragePath(storagePath);
+    if (!pathCheck.success) {
+        return {
+            message: pathCheck.message,
+            errors: { storage_path: [pathCheck.message] },
+        }
+    }
+
+    await mockDb.applications.update(appId, validatedFields.data);
+    revalidatePath('/admin');
+    revalidatePath('/submit-ticket');
+    return { message: 'Application updated successfully', errors: {} };
+  } catch (error: any) {
+     return { message: error.message || 'Failed to update application', errors: {} };
+  }
+}
+
+export async function deleteApplication(appId: string) {
+    try {
+        await mockDb.applications.delete(appId);
+        revalidatePath('/admin');
+        revalidatePath('/submit-ticket');
+        return { success: true, message: 'Application deleted successfully.' };
+    } catch (error) {
+        return { success: false, message: 'Failed to delete application.' };
+    }
+}

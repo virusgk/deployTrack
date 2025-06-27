@@ -1,3 +1,4 @@
+
 import fs from 'fs/promises';
 import path from 'path';
 import Papa from 'papaparse';
@@ -179,13 +180,41 @@ export const mockDb = {
         ...data,
         id: data.app_name.toLowerCase().replace(/\s+/g, '-'),
       };
-      const exists = applications.find(app => app.id === newApp.id);
+      const exists = applications.find(app => app.id === newApp.id || app.app_name === newApp.app_name);
       if(exists) {
-        throw new Error("Application already exists");
+        throw new Error("Application with this name already exists");
       }
       applications.push(newApp);
       await writeApplications(applications);
       return newApp;
+    },
+    async update(appId: string, data: Pick<Application, 'app_name' | 'storage_path'>): Promise<Application> {
+      const applications = await readApplications();
+      const appIndex = applications.findIndex(app => app.id === appId);
+      if (appIndex === -1) {
+        throw new Error("Application not found");
+      }
+      
+      // Check if new name conflicts with another existing application
+      const existingAppWithNewName = applications.find(app => app.app_name === data.app_name && app.id !== appId);
+      if (existingAppWithNewName) {
+          throw new Error("Another application with this name already exists.");
+      }
+
+      const updatedApp = { ...applications[appIndex], ...data };
+      applications[appIndex] = updatedApp;
+      
+      await writeApplications(applications);
+      return updatedApp;
+    },
+    async delete(appId: string): Promise<void> {
+      let applications = await readApplications();
+      const initialCount = applications.length;
+      applications = applications.filter(app => app.id !== appId);
+      if (applications.length === initialCount) {
+        throw new Error("Application not found to delete.");
+      }
+      await writeApplications(applications);
     },
   },
 };
