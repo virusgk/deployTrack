@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import {
   Card,
   CardContent,
@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { addApplication } from '@/app/actions';
-import { useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle } from 'lucide-react';
 import {
@@ -43,7 +43,7 @@ function AddAppButton() {
 }
 
 function ApplicationConfig({ applications }: { applications: Application[] }) {
-  const [state, formAction] = useFormState(addApplication, { message: '', errors: {} });
+  const [state, formAction] = useActionState(addApplication, { message: '', errors: {} });
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
 import {
   Select,
   SelectContent,
@@ -25,7 +25,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Application } from '@/lib/types';
 import { submitTicket } from '@/app/actions';
-import { useEffect } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send } from 'lucide-react';
 
@@ -53,7 +53,7 @@ function SubmitButton() {
 }
 
 export function TicketForm({ applications }: TicketFormProps) {
-  const [state, formAction] = useFormState(submitTicket, { message: '', errors: {} });
+  const [state, formAction] = useActionState(submitTicket, { message: '', errors: {} });
   const { toast } = useToast();
 
   const form = useForm<TicketFormValues>({
