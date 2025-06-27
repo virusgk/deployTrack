@@ -21,7 +21,7 @@ async function readTickets(): Promise<Ticket[]> {
         if (header === 'files') {
             try {
                 // The value from CSV is a stringified JSON array
-                return JSON.parse(value);
+                return value ? JSON.parse(value) : [];
             } catch {
                 return [];
             }
@@ -56,7 +56,7 @@ async function writeTickets(tickets: Ticket[]): Promise<void> {
         updated_at: t.updated_at.toISOString(),
         files: JSON.stringify(t.files),
     }));
-    const csvData = Papa.unparse(dataToUnparse, { header: true });
+    const csvData = Papa.unparse(dataToUnparse, { header: true, quotes: true });
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(ticketsFilePath, csvData, 'utf-8');
 }
@@ -84,7 +84,7 @@ async function readApplications(): Promise<Application[]> {
 }
 
 async function writeApplications(applications: Application[]): Promise<void> {
-    const csvData = Papa.unparse(applications, { header: true });
+    const csvData = Papa.unparse(applications, { header: true, quotes: true });
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(applicationsFilePath, csvData, 'utf-8');
 }
