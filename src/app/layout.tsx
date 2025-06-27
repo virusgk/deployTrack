@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Header } from '@/app/components/Header';
+import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'DeployTrack',
@@ -13,6 +14,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authCookie = cookies().get('auth');
+  const isLoggedIn = authCookie?.value === process.env.AUTH_SECRET;
+
   return (
     <html lang="en" className="h-full">
       <head>
@@ -21,7 +25,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></link>
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">
-        <Header />
+        <Header isLoggedIn={isLoggedIn} />
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
         </main>

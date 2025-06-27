@@ -2,7 +2,7 @@
 'use server';
 
 import fs from 'fs/promises';
-import { headers } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -214,4 +214,31 @@ export async function deleteApplication(appId: string) {
     } catch (error) {
         return { success: false, message: 'Failed to delete application.' };
     }
+}
+
+export async function login(prevState: any, formData: FormData) {
+  const password = formData.get('password');
+  if (password === process.env.ADMIN_PASSWORD) {
+    const authSecret = process.env.AUTH_SECRET;
+    if (!authSecret) {
+        throw new Error('AUTH_SECRET environment variable is not set.');
+    }
+    cookies().set('auth', authSecret, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24, // 1 day
+    });
+    redirect('/admin');
+  }
+
+  return {
+    error: 'Invalid password. Please try again.',
+  };
+}
+
+export async function logout() {
+  cookies().set('auth', '', { expires: new Date(0) });
+  redirect('/');
 }
