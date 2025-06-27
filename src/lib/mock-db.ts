@@ -1,72 +1,106 @@
+import fs from 'fs/promises';
+import path from 'path';
+import Papa from 'papaparse';
 import type { Application, Ticket, TicketStatus } from '@/lib/types';
 
-let tickets: Ticket[] = [
-  {
-    ticket_id: 'TICKET-20240729-ABCDE',
-    application: 'Frontend Portal',
-    environment: 'QA',
-    description: 'Deploy new user authentication feature with updated UI components.',
-    ip_address: '127.0.0.1',
-    files: [{ name: 'build_v1.2.zip', path: 'tickets/TICKET-20240729-ABCDE/build_v1.2.zip', download_url: '#' }],
-    status: 'Completed',
-    created_at: new Date('2024-07-29T10:00:00Z'),
-    updated_at: new Date('2024-07-29T11:30:00Z'),
-  },
-  {
-    ticket_id: 'TICKET-20240729-FGHIJ',
-    application: 'App2',
-    environment: 'Prod',
-    description: 'Critical hotfix for the main payment gateway integration.',
-    ip_address: '192.168.1.100',
-    files: [{ name: 'hotfix-payment.zip', path: 'tickets/TICKET-20240729-FGHIJ/hotfix-payment.zip', download_url: '#' }],
-    status: 'In Progress',
-    created_at: new Date('2024-07-29T12:00:00Z'),
-    updated_at: new Date('2024-07-29T12:15:00Z'),
-  },
-  {
-    ticket_id: 'TICKET-20240730-KLMNO',
-    application: 'App1',
-    environment: 'QA',
-    description: 'Update Node.js and other critical dependency versions.',
-    ip_address: '127.0.0.1',
-    files: [],
-    status: 'Pending',
-    created_at: new Date('2024-07-30T09:00:00Z'),
-    updated_at: new Date('2024-07-30T09:00:00Z'),
-  },
-    {
-    ticket_id: 'TICKET-20240730-PQRST',
-    application: 'Frontend Portal',
-    environment: 'Prod',
-    description: 'Release of the new marketing landing page.',
-    ip_address: '127.0.0.1',
-    files: [{ name: 'marketing-release.zip', path: 'tickets/TICKET-20240730-PQRST/marketing-release.zip', download_url: '#' }],
-    status: 'Pending',
-    created_at: new Date('2024-07-30T14:00:00Z'),
-    updated_at: new Date('2024-07-30T14:00:00Z'),
-  },
-];
+const dataDir = path.join(process.cwd(), 'data');
+const ticketsFilePath = path.join(dataDir, 'tickets.csv');
+const applicationsFilePath = path.join(dataDir, 'applications.csv');
 
-let applications: Application[] = [
-  { id: 'app1', app_name: 'App1', storage_path: 'apps/App1' },
-  { id: 'app2', app_name: 'App2', storage_path: 'apps/App2' },
-  { id: 'frontend-portal', app_name: 'Frontend Portal', storage_path: 'apps/Frontend-Portal' },
-];
+// Helper functions to read/write CSVs
+async function readTickets(): Promise<Ticket[]> {
+  try {
+    await fs.mkdir(dataDir, { recursive: true });
+    const fileContent = await fs.readFile(ticketsFilePath, 'utf-8');
+    if (!fileContent.trim()) return [];
 
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+    const result = Papa.parse(fileContent, {
+      header: true,
+      skipEmptyLines: true,
+      transform: (value, header) => {
+        if (header === 'files') {
+            try {
+                // The value from CSV is a stringified JSON array
+                return JSON.parse(value);
+            } catch {
+                return [];
+            }
+        }
+        if (header === 'created_at' || header === 'updated_at') {
+            return new Date(value);
+        }
+        return value;
+      }
+    });
+
+    if (result.errors.length > 0) {
+        console.error("Errors parsing tickets.csv:", result.errors);
+    }
+    
+    const tickets = result.data as unknown as Ticket[];
+
+    return tickets.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return []; // File doesn't exist, start fresh
+    }
+    console.error("Error reading tickets.csv:", error);
+    throw error;
+  }
+}
+
+async function writeTickets(tickets: Ticket[]): Promise<void> {
+    const dataToUnparse = tickets.map(t => ({
+        ...t,
+        created_at: t.created_at.toISOString(),
+        updated_at: t.updated_at.toISOString(),
+        files: JSON.stringify(t.files),
+    }));
+    const csvData = Papa.unparse(dataToUnparse, { header: true });
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.writeFile(ticketsFilePath, csvData, 'utf-8');
+}
+
+
+async function readApplications(): Promise<Application[]> {
+  try {
+    await fs.mkdir(dataDir, { recursive: true });
+    const fileContent = await fs.readFile(applicationsFilePath, 'utf-8');
+     if (!fileContent.trim()) return [];
+    const result = Papa.parse<Application>(fileContent, { header: true, skipEmptyLines: true });
+    
+    if (result.errors.length > 0) {
+        console.error("Errors parsing applications.csv:", result.errors);
+    }
+
+    return result.data;
+  } catch (error) {
+     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return []; // File doesn't exist, start fresh
+    }
+    console.error("Error reading applications.csv:", error);
+    throw error;
+  }
+}
+
+async function writeApplications(applications: Application[]): Promise<void> {
+    const csvData = Papa.unparse(applications, { header: true });
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.writeFile(applicationsFilePath, csvData, 'utf-8');
+}
+
 
 export const mockDb = {
   tickets: {
     async findByIp(ip: string): Promise<Ticket[]> {
-      await delay(100);
-      return tickets.filter(t => t.ip_address === ip || t.ip_address === '::1' && ip === '127.0.0.1').sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+      const tickets = await readTickets();
+      return tickets.filter(t => t.ip_address === ip || (t.ip_address === '::1' && ip === '127.0.0.1'));
     },
     async findAll(): Promise<Ticket[]> {
-      await delay(100);
-      return [...tickets].sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+      return await readTickets();
     },
     async create(data: Omit<Ticket, 'ticket_id' | 'created_at' | 'updated_at' | 'files' | 'status'> & { ip_address: string }): Promise<Ticket> {
-      await delay(100);
+      const tickets = await readTickets();
       const newTicket: Ticket = {
         ...data,
         ticket_id: `TICKET-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
@@ -76,13 +110,15 @@ export const mockDb = {
         updated_at: new Date(),
       };
       tickets.unshift(newTicket);
+      await writeTickets(tickets);
       return newTicket;
     },
     async updateStatus(ticketId: string, status: TicketStatus): Promise<Ticket | undefined> {
-      await delay(50);
+      let tickets = await readTickets();
       const ticketIndex = tickets.findIndex(t => t.ticket_id === ticketId);
       if (ticketIndex > -1) {
         tickets[ticketIndex] = { ...tickets[ticketIndex], status, updated_at: new Date() };
+        await writeTickets(tickets);
         return tickets[ticketIndex];
       }
       return undefined;
@@ -90,11 +126,10 @@ export const mockDb = {
   },
   applications: {
     async findAll(): Promise<Application[]> {
-      await delay(50);
-      return [...applications];
+      return await readApplications();
     },
     async create(data: Pick<Application, 'app_name' | 'storage_path'>): Promise<Application> {
-      await delay(50);
+      const applications = await readApplications();
       const newApp: Application = {
         ...data,
         id: data.app_name.toLowerCase().replace(/\s+/g, '-'),
@@ -104,6 +139,7 @@ export const mockDb = {
         throw new Error("Application already exists");
       }
       applications.push(newApp);
+      await writeApplications(applications);
       return newApp;
     },
   },

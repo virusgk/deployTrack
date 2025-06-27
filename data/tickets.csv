@@ -1,0 +1,5 @@
+ticket_id,application,environment,description,ip_address,files,status,created_at,updated_at
+TICKET-20240729-ABCDE,"Frontend Portal",QA,"Deploy new user authentication feature with updated UI components.","127.0.0.1","[{\"name\":\"build_v1.2.zip\",\"path\":\"tickets/TICKET-20240729-ABCDE/build_v1.2.zip\",\"download_url\":\"#\"}]",Completed,"2024-07-29T10:00:00.000Z","2024-07-29T11:30:00.000Z"
+TICKET-20240729-FGHIJ,App2,Prod,"Critical hotfix for the main payment gateway integration.","192.168.1.100","[{\"name\":\"hotfix-payment.zip\",\"path\":\"tickets/TICKET-20240729-FGHIJ/hotfix-payment.zip\",\"download_url\":\"#\"}]","In Progress","2024-07-29T12:00:00.000Z","2024-07-29T12:15:00.000Z"
+TICKET-20240730-KLMNO,App1,QA,"Update Node.js and other critical dependency versions.","127.0.0.1","[]",Pending,"2024-07-30T09:00:00.000Z","2024-07-30T09:00:00.000Z"
+TICKET-20240730-PQRST,"Frontend Portal",Prod,"Release of the new marketing landing page.","127.0.0.1","[{\"name\":\"marketing-release.zip\",\"path\":\"tickets/TICKET-20240730-PQRST/marketing-release.zip\",\"download_url\":\"#\"}]",Pending,"2024-07-30T14:00:00.000Z","2024-07-30T14:00:00.000Z"
