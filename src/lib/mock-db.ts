@@ -17,31 +17,38 @@ async function readTickets(): Promise<Ticket[]> {
     const result = Papa.parse(fileContent, {
       header: true,
       skipEmptyLines: true,
-      transform: (value, header) => {
-        if (header === 'files') {
-            try {
-                // The value from CSV is a stringified JSON array.
-                // Papaparse should handle unescaping quotes from the CSV format.
-                return value ? JSON.parse(value) : [];
-            } catch {
-                // If JSON is malformed, return an empty array.
-                return [];
-            }
-        }
-        if (header === 'created_at' || header === 'updated_at') {
-            const date = new Date(value);
-            return isNaN(date.getTime()) ? new Date() : date;
-        }
-        return value;
-      }
     });
 
     if (result.errors.length > 0) {
         console.error("Errors parsing tickets.csv:", result.errors);
     }
     
-    // Filter out any potential empty rows or rows without a ticket_id
-    const tickets = (result.data as unknown as Ticket[]).filter(t => t && t.ticket_id);
+    // Process data after parsing to be more robust against corrupted rows
+    const tickets: Ticket[] = (result.data as any[])
+      .filter(row => row && row.ticket_id) // Ensure the row has a ticket_id
+      .map(row => {
+        try {
+          const createdAt = new Date(row.created_at);
+          const updatedAt = new Date(row.updated_at);
+
+          const ticket: Ticket = {
+            ticket_id: row.ticket_id,
+            application: row.application,
+            environment: row.environment,
+            description: row.description,
+            ip_address: row.ip_address,
+            files: row.files ? JSON.parse(row.files) : [],
+            status: row.status,
+            created_at: isNaN(createdAt.getTime()) ? new Date() : createdAt,
+            updated_at: isNaN(updatedAt.getTime()) ? new Date() : updatedAt,
+          };
+          return ticket;
+        } catch (e) {
+          console.error("Error processing a ticket row, skipping:", row, e);
+          return null; // This row is corrupted, so we'll filter it out
+        }
+      })
+      .filter((ticket): ticket is Ticket => ticket !== null); // Remove nulls from corrupted rows
 
     return tickets.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   } catch (error) {
