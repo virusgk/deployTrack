@@ -9,54 +9,39 @@
  * - ExtractIpAddressOutput - The return type for the extractIpAddress function.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+// NOTE: Using an AI flow for this task is not efficient. 
+// It has been replaced with a standard function for reliability and performance.
 
-const ExtractIpAddressInputSchema = z.object({
-  headers: z.record(z.string()).describe('The request headers.'),
-});
-export type ExtractIpAddressInput = z.infer<typeof ExtractIpAddressInputSchema>;
-
-const ExtractIpAddressOutputSchema = z.object({
-  ipAddress: z.string().describe('The extracted IP address.'),
-});
-export type ExtractIpAddressOutput = z.infer<typeof ExtractIpAddressOutputSchema>;
-
-export async function extractIpAddress(input: ExtractIpAddressInput): Promise<ExtractIpAddressOutput> {
-  return extractIpAddressFlow(input);
+export interface ExtractIpAddressInput {
+  headers: Record<string, string>;
 }
 
-const prompt = ai.definePrompt({
-  name: 'extractIpAddressPrompt',
-  input: {schema: ExtractIpAddressInputSchema},
-  output: {schema: ExtractIpAddressOutputSchema},
-  prompt: `Extract the IP address from the following headers:\n\nHeaders: {{{JSON.stringify(headers)}}}`,
-});
+export interface ExtractIpAddressOutput {
+  ipAddress: string;
+}
 
-const extractIpAddressFlow = ai.defineFlow(
-  {
-    name: 'extractIpAddressFlow',
-    inputSchema: ExtractIpAddressInputSchema,
-    outputSchema: ExtractIpAddressOutputSchema,
-  },
-  async input => {
-    // Attempt to extract the IP address from common headers
-    const ipAddress =
-      input.headers['x-forwarded-for'] ||
-      input.headers['x-real-ip'] ||
-      input.headers['cf-connecting-ip'] || // Cloudflare
-      input.headers['fastly-client-ip'] || // Fastly
-      input.headers['x-cluster-client-ip'] ||
-      input.headers['x-forwarded'] ||
-      input.headers['forwarded-for'] ||
-      input.headers['forwarded'] ||
-      // Some platforms like Netlify inject the IP in the `client-ip` header.
-      input.headers['client-ip'] ||
-      // Fallback to remoteAddress, which might include the port
-      '';
+export async function extractIpAddress(
+  input: ExtractIpAddressInput
+): Promise<ExtractIpAddressOutput> {
+  const headers = input.headers;
+  
+  // The 'x-forwarded-for' header can be a comma-separated list of IPs.
+  // The first IP in the list is the original client IP.
+  const xForwardedFor = (headers['x-forwarded-for'] || '').split(',')[0].trim();
 
-    return {
-      ipAddress: ipAddress || 'unknown',
-    };
-  }
-);
+  const ipAddress =
+    xForwardedFor ||
+    headers['x-real-ip'] ||
+    headers['cf-connecting-ip'] || // Cloudflare
+    headers['fastly-client-ip'] || // Fastly
+    headers['x-cluster-client-ip'] ||
+    headers['x-forwarded'] ||
+    headers['forwarded-for'] ||
+    headers['forwarded'] ||
+    headers['client-ip'] || // From some platforms like Netlify
+    '';
+
+  return {
+    ipAddress: ipAddress || 'unknown',
+  };
+}
