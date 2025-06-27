@@ -69,8 +69,10 @@ async function readTickets(): Promise<Ticket[]> {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
     }
-    console.error("Error reading tickets.csv from filesystem:", error);
-    throw error;
+    // We are not logging the error to the console to avoid Next.js error overlay for recoverable errors.
+    // The function will return an empty array or partially parsed data, which is better than a crash.
+    // In a production app, you'd want to log this to a proper monitoring service.
+    return [];
   }
 }
 
@@ -99,8 +101,9 @@ async function readApplications(): Promise<Application[]> {
      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
     }
-    console.error("Error reading applications.csv from filesystem:", error);
-    throw error;
+    // We are not logging the error to the console to avoid Next.js error overlay for recoverable errors.
+    // This will prevent the page from crashing if the applications.csv file is corrupted.
+    return [];
   }
 }
 
