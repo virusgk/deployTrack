@@ -20,14 +20,17 @@ async function readTickets(): Promise<Ticket[]> {
       transform: (value, header) => {
         if (header === 'files') {
             try {
-                // The value from CSV is a stringified JSON array
+                // The value from CSV is a stringified JSON array.
+                // Papaparse should handle unescaping quotes from the CSV format.
                 return value ? JSON.parse(value) : [];
             } catch {
+                // If JSON is malformed, return an empty array.
                 return [];
             }
         }
         if (header === 'created_at' || header === 'updated_at') {
-            return new Date(value);
+            const date = new Date(value);
+            return isNaN(date.getTime()) ? new Date() : date;
         }
         return value;
       }
@@ -37,9 +40,10 @@ async function readTickets(): Promise<Ticket[]> {
         console.error("Errors parsing tickets.csv:", result.errors);
     }
     
-    const tickets = result.data as unknown as Ticket[];
+    // Filter out any potential empty rows or rows without a ticket_id
+    const tickets = (result.data as unknown as Ticket[]).filter(t => t && t.ticket_id);
 
-    return tickets.sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+    return tickets.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
@@ -56,6 +60,7 @@ async function writeTickets(tickets: Ticket[]): Promise<void> {
         updated_at: t.updated_at.toISOString(),
         files: JSON.stringify(t.files),
     }));
+    // Using quotes: true will ensure fields with commas, quotes, or newlines are properly quoted.
     const csvData = Papa.unparse(dataToUnparse, { header: true, quotes: true });
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(ticketsFilePath, csvData, 'utf-8');
@@ -73,7 +78,7 @@ async function readApplications(): Promise<Application[]> {
         console.error("Errors parsing applications.csv:", result.errors);
     }
 
-    return result.data;
+    return result.data.filter(a => a && a.id);
   } catch (error) {
      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
