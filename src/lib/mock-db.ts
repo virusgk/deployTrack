@@ -71,7 +71,6 @@ async function readTickets(): Promise<Ticket[]> {
     }
     // We are not logging the error to the console to avoid Next.js error overlay for recoverable errors.
     // The function will return an empty array or partially parsed data, which is better than a crash.
-    // In a production app, you'd want to log this to a proper monitoring service.
     return [];
   }
 }
@@ -94,9 +93,31 @@ async function readApplications(): Promise<Application[]> {
     await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(applicationsFilePath, 'utf-8');
      if (!fileContent.trim()) return [];
-    const result = Papa.parse<Application>(fileContent, { header: true, skipEmptyLines: true });
-    
-    return result.data.filter(a => a && a.id);
+
+    const result = Papa.parse(fileContent, {
+      header: true,
+      skipEmptyLines: true,
+    });
+
+    const applications: Application[] = (result.data as any[])
+      .map(row => {
+        try {
+          if (!row || !row.id || !row.app_name || !row.storage_path) {
+            return null;
+          }
+          return {
+            id: row.id,
+            app_name: row.app_name,
+            storage_path: row.storage_path,
+          };
+        } catch (e) {
+          // Silently skip corrupted rows
+          return null;
+        }
+      })
+      .filter((app): app is Application => app !== null);
+
+    return applications;
   } catch (error) {
      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
