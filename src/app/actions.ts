@@ -1,6 +1,7 @@
 
 'use server';
 
+import 'dotenv/config';
 import fs from 'fs/promises';
 import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
