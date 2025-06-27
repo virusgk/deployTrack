@@ -18,10 +18,6 @@ async function readTickets(): Promise<Ticket[]> {
       header: true,
       skipEmptyLines: true,
     });
-
-    if (result.errors.length > 0) {
-        console.error("Errors parsing tickets.csv:", result.errors);
-    }
     
     // Process data after parsing to be more robust against corrupted rows
     const tickets: Ticket[] = (result.data as any[])
@@ -35,7 +31,11 @@ async function readTickets(): Promise<Ticket[]> {
           let parsedFiles: any[] = [];
           if (row.files && typeof row.files === 'string') {
             try {
-              const tempFiles = JSON.parse(row.files);
+              // The JSON might be wrapped in extra quotes by some CSV writers, let's try to strip them
+              const cleanJsonString = row.files.startsWith("'") && row.files.endsWith("'") 
+                ? row.files.slice(1, -1) 
+                : row.files;
+              const tempFiles = JSON.parse(cleanJsonString);
               if (Array.isArray(tempFiles)) {
                 parsedFiles = tempFiles;
               }
@@ -58,8 +58,8 @@ async function readTickets(): Promise<Ticket[]> {
           };
           return ticket;
         } catch (e) {
-          console.error("Error processing a ticket row, skipping:", row, e);
-          return null; // This row is corrupted, so we'll filter it out
+          // This row is corrupted, so we'll filter it out silently
+          return null;
         }
       })
       .filter((ticket): ticket is Ticket => ticket !== null); // Remove nulls from corrupted rows
@@ -69,7 +69,7 @@ async function readTickets(): Promise<Ticket[]> {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
     }
-    console.error("Error reading tickets.csv:", error);
+    console.error("Error reading tickets.csv from filesystem:", error);
     throw error;
   }
 }
@@ -94,16 +94,12 @@ async function readApplications(): Promise<Application[]> {
      if (!fileContent.trim()) return [];
     const result = Papa.parse<Application>(fileContent, { header: true, skipEmptyLines: true });
     
-    if (result.errors.length > 0) {
-        console.error("Errors parsing applications.csv:", result.errors);
-    }
-
     return result.data.filter(a => a && a.id);
   } catch (error) {
      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return []; // File doesn't exist, start fresh
     }
-    console.error("Error reading applications.csv:", error);
+    console.error("Error reading applications.csv from filesystem:", error);
     throw error;
   }
 }
