@@ -1,1 +1,2 @@
-id,app_name,storage_path
+"app_name","storage_path","id"
+"IntelHub","	apps/Frontend-Portal","intelhub"

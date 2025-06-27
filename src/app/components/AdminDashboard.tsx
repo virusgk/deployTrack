@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormStatus } from 'react-dom';
@@ -14,10 +15,10 @@ import type { Ticket, Application } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { addApplication } from '@/app/actions';
-import { useActionState, useEffect, useRef } from 'react';
+import { addApplication, checkStoragePath } from '@/app/actions';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle } from 'lucide-react';
+import { Loader2, PlusCircle, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
 import {
     Table,
     TableBody,
@@ -32,10 +33,10 @@ interface AdminDashboardProps {
   allApplications: Application[];
 }
 
-function AddAppButton() {
+function AddAppButton({ isPathValid }: { isPathValid: boolean }) {
     const { pending } = useFormStatus();
     return (
-        <Button type="submit" disabled={pending} className="w-full">
+        <Button type="submit" disabled={pending || !isPathValid} className="w-full">
             {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
             Add Application
         </Button>
@@ -46,6 +47,28 @@ function ApplicationConfig({ applications }: { applications: Application[] }) {
   const [state, formAction] = useActionState(addApplication, { message: '', errors: {} });
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+
+  const [path, setPath] = useState('');
+  const [pathStatus, setPathStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
+  const [pathMessage, setPathMessage] = useState('');
+
+
+  const handleCheckPath = async () => {
+    if (!path) {
+        setPathStatus('invalid');
+        setPathMessage('Storage path cannot be empty.');
+        return;
+    }
+    setPathStatus('checking');
+    setPathMessage('');
+    const result = await checkStoragePath(path);
+    if (result.success) {
+        setPathStatus('valid');
+    } else {
+        setPathStatus('invalid');
+    }
+    setPathMessage(result.message);
+  };
 
   useEffect(() => {
     if (state?.message) {
@@ -61,6 +84,9 @@ function ApplicationConfig({ applications }: { applications: Application[] }) {
             description: state.message,
         });
         formRef.current?.reset();
+        setPath('');
+        setPathStatus('idle');
+        setPathMessage('');
       }
     }
   }, [state, toast]);
@@ -77,18 +103,48 @@ function ApplicationConfig({ applications }: { applications: Application[] }) {
                 <div className="space-y-2">
                     <Label htmlFor="app_name">Application Name</Label>
                     <Input id="app_name" name="app_name" placeholder="e.g., Frontend Portal" required/>
-                    {state?.errors?.app_name && <p className="text-sm font-medium text-destructive">{state.errors.app_name}</p>}
+                    {state?.errors?.app_name && <p className="text-sm font-medium text-destructive">{state.errors.app_name[0]}</p>}
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="storage_path">Storage Path</Label>
-                    <Input id="storage_path" name="storage_path" placeholder="e.g., apps/frontend-portal" required/>
-                    {state?.errors?.storage_path && <p className="text-sm font-medium text-destructive">{state.errors.storage_path}</p>}
+                    <div className="flex items-center gap-2">
+                      <Input 
+                          id="storage_path" 
+                          name="storage_path" 
+                          placeholder="e.g., data/app-storage/portal" 
+                          required
+                          value={path}
+                          onChange={(e) => {
+                              setPath(e.target.value);
+                              if (pathStatus !== 'idle') {
+                                setPathStatus('idle');
+                                setPathMessage('');
+                              }
+                          }}
+                      />
+                      <Button type="button" variant="outline" size="icon" onClick={handleCheckPath} disabled={pathStatus === 'checking' || !path}>
+                          <span className="sr-only">Check Path Connectivity</span>
+                          {pathStatus === 'checking' ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                          {pathStatus === 'idle' ? <HelpCircle className="h-4 w-4 text-muted-foreground" /> : null}
+                          {pathStatus === 'valid' ? <CheckCircle className="h-4 w-4 text-green-500" /> : null}
+                          {pathStatus === 'invalid' ? <XCircle className="h-4 w-4 text-red-500" /> : null}
+                      </Button>
+                    </div>
+                     {pathMessage && (
+                       <p className={`text-sm mt-2 ${pathStatus === 'valid' ? 'text-green-600' : 'text-destructive'}`}>
+                           {pathMessage}
+                       </p>
+                    )}
+                    {state?.errors?.storage_path && <p className="text-sm font-medium text-destructive">{state.errors.storage_path[0]}</p>}
                 </div>
-                <AddAppButton />
+                <AddAppButton isPathValid={pathStatus === 'valid'}/>
             </form>
         </div>
         <div className="md:col-span-2">
              <h3 className="text-lg font-medium">Existing Applications</h3>
+             <p className="text-sm text-muted-foreground">
+                Applications with a valid storage path can be used for deployments.
+             </p>
              <div className="border rounded-lg mt-4">
                  <Table>
                     <TableHeader>
@@ -104,6 +160,13 @@ function ApplicationConfig({ applications }: { applications: Application[] }) {
                                 <TableCell className="font-mono">{app.storage_path}</TableCell>
                             </TableRow>
                         ))}
+                         {applications.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={2} className="h-24 text-center">
+                                    No applications configured yet.
+                                </TableCell>
+                            </TableRow>
+                         )}
                     </TableBody>
                 </Table>
              </div>

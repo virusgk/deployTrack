@@ -1,6 +1,7 @@
 
 'use server';
 
+import fs from 'fs/promises';
 import { headers } from 'next/headers';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -44,6 +45,18 @@ export async function getApplications(): Promise<Application[]> {
   return mockDb.applications.findAll();
 }
 
+export async function checkStoragePath(path: string): Promise<{ success: boolean; message: string }> {
+  try {
+    await fs.access(path, fs.constants.F_OK | fs.constants.W_OK);
+    return { success: true, message: 'Path is accessible and writable.' };
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+       return { success: false, message: 'Path does not exist. It must be created before adding the application.' };
+    }
+    return { success: false, message: 'Shared drive access issue: Path is not accessible or writable.' };
+  }
+}
+
 const ticketSchema = z.object({
   application: z.string().min(1, 'Application is required'),
   environment: z.enum(['QA', 'Prod']),
@@ -65,6 +78,24 @@ export async function submitTicket(prevState: any, formData: FormData) {
       };
     }
     
+    const applications = await getApplications();
+    const selectedApp = applications.find(app => app.app_name === validatedFields.data.application);
+
+    if (!selectedApp) {
+      return {
+          message: 'Selected application not found.',
+          errors: { application: ['This application does not exist.'] }
+      }
+    }
+
+    const pathCheck = await checkStoragePath(selectedApp.storage_path);
+    if (!pathCheck.success) {
+        return {
+            message: 'Shared drive access issue for the selected application. Please contact an admin.',
+            errors: { application: [pathCheck.message] }
+        }
+    }
+
     // File upload logic would go here. We are simulating it.
     const files = formData.getAll('files');
     if(files.length > 0 && (files[0] as File).size === 0) {
@@ -102,10 +133,13 @@ const appSchema = z.object({
 });
 
 export async function addApplication(prevState: any, formData: FormData) {
+  const appName = formData.get('app_name') as string;
+  const storagePath = formData.get('storage_path') as string;
+
   try {
     const validatedFields = appSchema.safeParse({
-      app_name: formData.get('app_name'),
-      storage_path: formData.get('storage_path'),
+      app_name: appName,
+      storage_path: storagePath,
     });
 
     if (!validatedFields.success) {
@@ -113,6 +147,14 @@ export async function addApplication(prevState: any, formData: FormData) {
         message: 'Validation failed',
         errors: validatedFields.error.flatten().fieldErrors,
       };
+    }
+
+    const pathCheck = await checkStoragePath(storagePath);
+    if (!pathCheck.success) {
+        return {
+            message: pathCheck.message,
+            errors: { storage_path: [pathCheck.message] },
+        }
     }
 
     await mockDb.applications.create(validatedFields.data);
