@@ -1,5 +1,1 @@
-"id","app_name","storage_path"
-"app1","App1","apps/App1"
-"app2","App2","apps/App2"
-"frontend-portal","Frontend Portal","apps/Frontend-Portal"
-"intelhub","IntelHub","	apps/Frontend-Portal"
+id,app_name,storage_path
