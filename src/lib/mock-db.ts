@@ -17,7 +17,6 @@ async function readTickets(): Promise<Ticket[]> {
     const result = Papa.parse(fileContent, {
       header: true,
       skipEmptyLines: true,
-      quoteChar: "'",
     });
 
     if (result.errors.length > 0) {
@@ -70,8 +69,7 @@ async function writeTickets(tickets: Ticket[]): Promise<void> {
         updated_at: t.updated_at.toISOString(),
         files: JSON.stringify(t.files),
     }));
-    // Using single quotes to avoid issues with double quotes in descriptions or stringified JSON.
-    const csvData = Papa.unparse(dataToUnparse, { header: true, quotes: true, quoteChar: "'" });
+    const csvData = Papa.unparse(dataToUnparse, { header: true, quotes: true });
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(ticketsFilePath, csvData, 'utf-8');
 }
@@ -82,7 +80,7 @@ async function readApplications(): Promise<Application[]> {
     await fs.mkdir(dataDir, { recursive: true });
     const fileContent = await fs.readFile(applicationsFilePath, 'utf-8');
      if (!fileContent.trim()) return [];
-    const result = Papa.parse<Application>(fileContent, { header: true, skipEmptyLines: true, quoteChar: "'" });
+    const result = Papa.parse<Application>(fileContent, { header: true, skipEmptyLines: true });
     
     if (result.errors.length > 0) {
         console.error("Errors parsing applications.csv:", result.errors);
@@ -99,7 +97,7 @@ async function readApplications(): Promise<Application[]> {
 }
 
 async function writeApplications(applications: Application[]): Promise<void> {
-    const csvData = Papa.unparse(applications, { header: true, quotes: true, quoteChar: "'" });
+    const csvData = Papa.unparse(applications, { header: true, quotes: true });
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(applicationsFilePath, csvData, 'utf-8');
 }
