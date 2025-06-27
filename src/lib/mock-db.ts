@@ -25,13 +25,25 @@ async function readTickets(): Promise<Ticket[]> {
     
     // Process data after parsing to be more robust against corrupted rows
     const tickets: Ticket[] = (result.data as any[])
-      .filter(row => row && row.ticket_id) // Ensure the row has a ticket_id
       .map(row => {
         try {
+          if (!row || !row.ticket_id || !row.status || !row.created_at) return null;
+
           const createdAt = new Date(row.created_at);
           const updatedAt = new Date(row.updated_at);
-
-          if (!row.status || !row.ticket_id || !row.created_at) return null;
+          
+          let parsedFiles: any[] = [];
+          if (row.files && typeof row.files === 'string') {
+            try {
+              const tempFiles = JSON.parse(row.files);
+              if (Array.isArray(tempFiles)) {
+                parsedFiles = tempFiles;
+              }
+            } catch (e) {
+              // Silently ignore JSON parsing errors for the 'files' field.
+              // This handles corrupted data from previous writes without logging an error.
+            }
+          }
 
           const ticket: Ticket = {
             ticket_id: row.ticket_id,
@@ -39,7 +51,7 @@ async function readTickets(): Promise<Ticket[]> {
             environment: row.environment,
             description: row.description,
             ip_address: row.ip_address,
-            files: row.files && row.files !== '[]' ? JSON.parse(row.files) : [],
+            files: parsedFiles,
             status: row.status,
             created_at: isNaN(createdAt.getTime()) ? new Date() : createdAt,
             updated_at: isNaN(updatedAt.getTime()) ? new Date() : updatedAt,
@@ -67,7 +79,7 @@ async function writeTickets(tickets: Ticket[]): Promise<void> {
         ...t,
         created_at: t.created_at.toISOString(),
         updated_at: t.updated_at.toISOString(),
-        files: JSON.stringify(t.files),
+        files: JSON.stringify(t.files || []),
     }));
     const csvData = Papa.unparse(dataToUnparse, { header: true, quotes: true });
     await fs.mkdir(dataDir, { recursive: true });
