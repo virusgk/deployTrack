@@ -10,7 +10,7 @@ import { redirect } from 'next/navigation';
 
 import { extractIpAddress } from '@/ai/flows/extract-ip-address';
 import { mockDb } from '@/lib/mock-db';
-import type { Ticket, Application, TicketStatus } from '@/lib/types';
+import type { Ticket, Application, TicketStatus, DeployedFile } from '@/lib/types';
 
 async function getIpAddress(): Promise<string> {
   try {
@@ -81,17 +81,25 @@ export async function submitTicket(prevState: any, formData: FormData) {
       };
     }
     
-    // Server-side validation for file type
-    const file = formData.get('files') as File | null;
-    if (file && file.size > 0) {
-      const allowedTypes = ['application/zip', 'application/x-zip-compressed'];
-      if (!allowedTypes.includes(file.type)) {
-        return {
-          message: 'Validation failed',
-          errors: { files: ['Only .zip files are allowed.'] }
-        };
-      }
-      // File upload logic would go here. We are simulating it.
+    const files = formData.getAll('files') as File[];
+    const deployedFiles: DeployedFile[] = [];
+    const allowedTypes = ['application/zip', 'application/x-zip-compressed'];
+
+    for (const file of files) {
+        if (file instanceof File && file.size > 0) {
+            if (!allowedTypes.includes(file.type)) {
+                return {
+                    message: 'Validation failed',
+                    errors: { files: [`Invalid file type: ${file.name}. Only .zip files are allowed.`] }
+                };
+            }
+            // In a real app, you would upload the file here and get a URL/path
+            deployedFiles.push({
+                name: file.name,
+                path: `/uploads/${file.name}`, // mock path
+                download_url: '#', // mock url
+            });
+        }
     }
 
     const applications = await getApplications();
@@ -113,7 +121,7 @@ export async function submitTicket(prevState: any, formData: FormData) {
     }
     
     const ipAddress = await getIpAddress();
-    await mockDb.tickets.create({ ...validatedFields.data, ip_address: ipAddress });
+    await mockDb.tickets.create({ ...validatedFields.data, ip_address: ipAddress, files: deployedFiles });
 
   } catch (error) {
     return {

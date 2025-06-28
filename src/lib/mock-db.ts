@@ -146,12 +146,11 @@ export const mockDb = {
     async findAll(): Promise<Ticket[]> {
       return await readTickets();
     },
-    async create(data: Omit<Ticket, 'ticket_id' | 'created_at' | 'updated_at' | 'files' | 'status'> & { ip_address: string }): Promise<Ticket> {
+    async create(data: Omit<Ticket, 'ticket_id' | 'created_at' | 'updated_at' | 'status'>): Promise<Ticket> {
       const tickets = await readTickets();
       const newTicket: Ticket = {
         ...data,
         ticket_id: `TICKET-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-        files: [], // Handled separately
         status: 'Pending',
         created_at: new Date(),
         updated_at: new Date(),
