@@ -62,10 +62,10 @@ interface TicketFormProps {
   applications: Application[];
 }
 
-function SubmitButton() {
+function SubmitButton({ isValid }: { isValid: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+    <Button type="submit" disabled={pending || !isValid} className="w-full sm:w-auto">
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
       Submit Ticket
     </Button>
@@ -79,6 +79,7 @@ export function TicketForm({ applications }: TicketFormProps) {
 
   const form = useForm<TicketFormValues>({
     resolver: zodResolver(ticketSchema),
+    mode: 'onChange',
     defaultValues: {
       application: '',
       environment: undefined,
@@ -89,6 +90,7 @@ export function TicketForm({ applications }: TicketFormProps) {
     },
   });
 
+  const { formState: { isValid } } = form;
   const stagedFiles = form.watch('files') || [];
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -293,7 +295,7 @@ export function TicketForm({ applications }: TicketFormProps) {
             )}
 
             <div className="flex justify-end">
-            <SubmitButton />
+            <SubmitButton isValid={isValid} />
             </div>
         </form>
     </Form>
