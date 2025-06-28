@@ -1,24 +1,19 @@
 import { getApplications } from '@/app/actions';
 import { TicketForm } from '@/app/components/TicketForm';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Rocket } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { PageHeader } from '@/app/components/PageHeader';
 
 export default async function SubmitTicketPage() {
   const applications = await getApplications();
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-3xl mx-auto">
+       <PageHeader 
+        title="Submit a New Deployment Ticket"
+        description="Fill out the form below to request a new deployment."
+      />
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <Rocket className="w-8 h-8 text-primary" />
-            <div>
-              <CardTitle className="text-2xl font-headline">Submit a New Deployment Ticket</CardTitle>
-              <CardDescription>Fill out the form below to request a new deployment.</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <TicketForm applications={applications} />
         </CardContent>
       </Card>

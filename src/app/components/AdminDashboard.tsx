@@ -5,9 +5,6 @@ import { useFormStatus } from 'react-dom';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TicketTable } from './TicketTable';
@@ -358,13 +355,7 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-2xl font-headline">Admin Dashboard</CardTitle>
-        <CardDescription>
-          Manage deployment tickets, configure applications, and view analytics.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <Tabs defaultValue="tickets" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="tickets">Manage Tickets</TabsTrigger>

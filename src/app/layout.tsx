@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import { Header } from '@/app/components/Header';
 import { cookies } from 'next/headers';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { AppSidebar } from '@/app/components/AppSidebar';
 
 export const metadata: Metadata = {
   title: 'DeployTrack',
@@ -24,11 +25,13 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></link>
       </head>
-      <body className="font-body antialiased flex flex-col min-h-screen">
-        <Header isLoggedIn={isLoggedIn} />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {children}
-        </main>
+      <body className="font-body antialiased">
+        <SidebarProvider>
+            <AppSidebar isLoggedIn={isLoggedIn} />
+            <SidebarInset className="p-4 sm:p-6 lg:p-8">
+                {children}
+            </SidebarInset>
+        </SidebarProvider>
         <Toaster />
       </body>
     </html>

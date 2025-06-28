@@ -1,11 +1,12 @@
 'use client';
 import { useActionState } from 'react';
+import Link from 'next/link';
 import { login } from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { KeyRound, Loader2, AlertCircle } from 'lucide-react';
+import { KeyRound, Loader2, AlertCircle, Rocket } from 'lucide-react';
 import { useFormStatus } from 'react-dom';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -26,7 +27,13 @@ export default function LoginPage() {
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-15rem)]">
       <Card className="w-full max-w-sm">
-        <CardHeader>
+        <CardHeader className="items-center text-center">
+            <Link href="/" className="flex items-center gap-2.5 mb-4">
+                <Rocket className="w-8 h-8 text-primary" />
+                <span className="text-2xl font-bold tracking-tight">
+                DeployTrack
+                </span>
+            </Link>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
             Enter the administrator password to access the admin dashboard.

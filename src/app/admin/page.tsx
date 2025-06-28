@@ -1,5 +1,6 @@
 import { getAllTickets, getApplications } from '@/app/actions';
 import { AdminDashboard } from '@/app/components/AdminDashboard';
+import { PageHeader } from '@/app/components/PageHeader';
 
 export default async function AdminPage() {
   const [tickets, applications] = await Promise.all([
@@ -8,8 +9,12 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <div className="w-full">
-      <AdminDashboard allTickets={tickets} allApplications={applications} />
-    </div>
+    <>
+        <PageHeader 
+            title="Admin Dashboard"
+            description="Manage deployment tickets, configure applications, and view analytics."
+        />
+        <AdminDashboard allTickets={tickets} allApplications={applications} />
+    </>
   );
 }
