@@ -45,6 +45,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 
 
 interface AdminDashboardProps {
@@ -360,20 +361,24 @@ export function AdminDashboard({
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Admin Dashboard</CardTitle>
         <CardDescription>
-          Manage deployment tickets and configure applications.
+          Manage deployment tickets, configure applications, and view analytics.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="tickets" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="tickets">Manage Tickets</TabsTrigger>
             <TabsTrigger value="applications">Configure Applications</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
           <TabsContent value="tickets" className="mt-6">
             <TicketTable tickets={allTickets} isAdmin />
           </TabsContent>
           <TabsContent value="applications" className="mt-6">
             <ApplicationConfig applications={allApplications} />
+          </TabsContent>
+           <TabsContent value="analytics" className="mt-6">
+            <AnalyticsDashboard tickets={allTickets} />
           </TabsContent>
         </Tabs>
       </CardContent>
