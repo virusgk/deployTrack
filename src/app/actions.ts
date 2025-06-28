@@ -61,6 +61,7 @@ export async function checkStoragePath(path: string): Promise<{ success: boolean
 const ticketSchema = z.object({
   application: z.string().min(1, 'Application is required'),
   environment: z.enum(['QA', 'Prod']),
+  change_type: z.enum(["Hotfix", "Feature Release", "Bug Fix", "Configuration", "Other"]),
   description: z.string().min(10, 'Description must be at least 10 characters'),
 });
 
@@ -69,6 +70,7 @@ export async function submitTicket(prevState: any, formData: FormData) {
     const validatedFields = ticketSchema.safeParse({
       application: formData.get('application'),
       environment: formData.get('environment'),
+      change_type: formData.get('change_type'),
       description: formData.get('description'),
     });
 

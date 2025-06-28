@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFormStatus } from 'react-dom';
@@ -32,6 +33,7 @@ import { Loader2, Send } from 'lucide-react';
 const ticketSchema = z.object({
   application: z.string().min(1, 'Application is required'),
   environment: z.enum(['QA', 'Prod'], { required_error: 'Environment is required' }),
+  change_type: z.enum(["Hotfix", "Feature Release", "Bug Fix", "Configuration", "Other"], { required_error: 'Change type is required' }),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   files: z.any().optional(),
 });
@@ -61,6 +63,7 @@ export function TicketForm({ applications }: TicketFormProps) {
     defaultValues: {
       application: '',
       environment: undefined,
+      change_type: undefined,
       description: '',
       files: undefined,
       ...state.values,
@@ -123,6 +126,30 @@ export function TicketForm({ applications }: TicketFormProps) {
                 </SelectContent>
               </Select>
               <FormMessage>{state.errors?.environment}</FormMessage>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="change_type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Change Type</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select the type of change" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="Hotfix">Hotfix</SelectItem>
+                  <SelectItem value="Feature Release">Feature Release</SelectItem>
+                  <SelectItem value="Bug Fix">Bug Fix</SelectItem>
+                  <SelectItem value="Configuration">Configuration</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage>{state.errors?.change_type}</FormMessage>
             </FormItem>
           )}
         />

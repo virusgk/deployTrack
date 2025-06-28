@@ -2,7 +2,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import Papa from 'papaparse';
-import type { Application, Ticket, TicketStatus } from '@/lib/types';
+import type { Application, ChangeType, Ticket, TicketStatus } from '@/lib/types';
 
 const dataDir = path.join(process.cwd(), 'data');
 const ticketsFilePath = path.join(dataDir, 'tickets.csv');
@@ -50,6 +50,7 @@ async function readTickets(): Promise<Ticket[]> {
             ticket_id: row.ticket_id,
             application: row.application,
             environment: row.environment,
+            change_type: row.change_type || 'Other',
             description: row.description,
             ip_address: row.ip_address,
             files: parsedFiles,

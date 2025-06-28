@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -17,8 +18,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { formatDistanceToNow } from 'date-fns';
-import { MoreHorizontal, Download, Server, FlaskConical, CircleDot } from 'lucide-react';
-import type { Ticket, TicketStatus } from '@/lib/types';
+import { MoreHorizontal, Download, Server, FlaskConical, CircleDot, Flame, PartyPopper, Bug, Settings, Info } from 'lucide-react';
+import type { Ticket, TicketStatus, ChangeType } from '@/lib/types';
 import { updateTicketStatus } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast"
 
@@ -50,6 +51,21 @@ export function TicketTable({ tickets, isAdmin = false }: TicketTableProps) {
     if(env === 'QA') return <FlaskConical className="h-4 w-4 text-purple-500 mr-2" />;
     return <Server className="h-4 w-4 text-green-500 mr-2" />;
   }
+  
+  const getChangeTypeIcon = (changeType: ChangeType) => {
+    switch (changeType) {
+      case 'Hotfix':
+        return <Flame className="h-4 w-4 text-red-500 mr-2" />;
+      case 'Feature Release':
+        return <PartyPopper className="h-4 w-4 text-blue-500 mr-2" />;
+      case 'Bug Fix':
+        return <Bug className="h-4 w-4 text-orange-500 mr-2" />;
+      case 'Configuration':
+        return <Settings className="h-4 w-4 text-gray-500 mr-2" />;
+      default:
+        return <Info className="h-4 w-4 text-gray-400 mr-2" />;
+    }
+  }
 
   return (
     <div className="border rounded-lg">
@@ -58,6 +74,7 @@ export function TicketTable({ tickets, isAdmin = false }: TicketTableProps) {
           <TableRow>
             <TableHead className="w-[150px]">Ticket ID</TableHead>
             <TableHead>Application</TableHead>
+            <TableHead>Change Type</TableHead>
             <TableHead>Environment</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Status</TableHead>
@@ -69,7 +86,7 @@ export function TicketTable({ tickets, isAdmin = false }: TicketTableProps) {
         <TableBody>
           {tickets.length === 0 && (
             <TableRow>
-              <TableCell colSpan={isAdmin ? 8 : 7} className="h-24 text-center">
+              <TableCell colSpan={isAdmin ? 9 : 8} className="h-24 text-center">
                 No tickets found.
               </TableCell>
             </TableRow>
@@ -78,6 +95,12 @@ export function TicketTable({ tickets, isAdmin = false }: TicketTableProps) {
             <TableRow key={ticket.ticket_id}>
               <TableCell className="font-medium">{ticket.ticket_id}</TableCell>
               <TableCell>{ticket.application}</TableCell>
+              <TableCell>
+                <div className='flex items-center'>
+                  {getChangeTypeIcon(ticket.change_type)}
+                  {ticket.change_type}
+                </div>
+              </TableCell>
               <TableCell>
                 <div className='flex items-center'>
                   {getEnvIcon(ticket.environment)}

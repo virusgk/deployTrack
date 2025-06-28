@@ -1,3 +1,4 @@
+
 export interface DeployedFile {
   name: string;
   path: string;
@@ -6,10 +7,13 @@ export interface DeployedFile {
 
 export type TicketStatus = "Pending" | "In Progress" | "Completed" | "Failed";
 
+export type ChangeType = "Hotfix" | "Feature Release" | "Bug Fix" | "Configuration" | "Other";
+
 export interface Ticket {
   ticket_id: string;
   application: string;
   environment: "QA" | "Prod";
+  change_type: ChangeType;
   description: string;
   ip_address: string;
   files: DeployedFile[];
