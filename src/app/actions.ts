@@ -81,6 +81,19 @@ export async function submitTicket(prevState: any, formData: FormData) {
       };
     }
     
+    // Server-side validation for file type
+    const file = formData.get('files') as File | null;
+    if (file && file.size > 0) {
+      const allowedTypes = ['application/zip', 'application/x-zip-compressed'];
+      if (!allowedTypes.includes(file.type)) {
+        return {
+          message: 'Validation failed',
+          errors: { files: ['Only .zip files are allowed.'] }
+        };
+      }
+      // File upload logic would go here. We are simulating it.
+    }
+
     const applications = await getApplications();
     const selectedApp = applications.find(app => app.app_name === validatedFields.data.application);
 
@@ -98,13 +111,7 @@ export async function submitTicket(prevState: any, formData: FormData) {
             errors: { application: [pathCheck.message] }
         }
     }
-
-    // File upload logic would go here. We are simulating it.
-    const files = formData.getAll('files');
-    if(files.length > 0 && (files[0] as File).size === 0) {
-      // No file selected
-    }
-
+    
     const ipAddress = await getIpAddress();
     await mockDb.tickets.create({ ...validatedFields.data, ip_address: ipAddress });
 

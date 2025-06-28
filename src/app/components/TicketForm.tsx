@@ -21,21 +21,30 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { useForm } from 'react-hook-form';
+import { useForm, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Application } from '@/lib/types';
 import { submitTicket } from '@/app/actions';
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Send } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 const ticketSchema = z.object({
   application: z.string().min(1, 'Application is required'),
   environment: z.enum(['QA', 'Prod'], { required_error: 'Environment is required' }),
   change_type: z.enum(["Hotfix", "Feature Release", "Bug Fix", "Configuration", "Other"], { required_error: 'Change type is required' }),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  files: z.any().optional(),
+  files: z
+    .custom<FileList>()
+    .refine((files) => {
+      if (!files || files.length === 0) return true;
+      const file = files[0];
+      const allowedTypes = ['application/zip', 'application/x-zip-compressed'];
+      return allowedTypes.includes(file.type);
+    }, 'Only .zip files are allowed.')
+    .optional(),
 });
 
 type TicketFormValues = z.infer<typeof ticketSchema>;
@@ -52,6 +61,55 @@ function SubmitButton() {
       Submit Ticket
     </Button>
   );
+}
+
+function UploadingUI() {
+    const { pending } = useFormStatus();
+    const { getValues } = useFormContext<TicketFormValues>();
+    const [progress, setProgress] = useState(0);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        if (pending) {
+            const files = getValues('files');
+            if (files && files.length > 0) {
+                setIsVisible(true);
+            }
+        } else {
+            setIsVisible(false);
+        }
+    }, [pending, getValues]);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout | undefined;
+        if (isVisible) {
+            setProgress(0);
+            timer = setInterval(() => {
+                setProgress((prev) => {
+                    if (prev >= 95) {
+                        clearInterval(timer!);
+                        return prev;
+                    }
+                    return prev + 5;
+                });
+            }, 200);
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [isVisible]);
+
+    if (!isVisible) return null;
+
+    return (
+        <div className="space-y-2">
+            <div className="flex justify-between items-center">
+                <FormLabel>Uploading file...</FormLabel>
+                <span className="text-sm font-medium text-muted-foreground">{progress}%</span>
+            </div>
+            <Progress value={progress} className="w-full" />
+        </div>
+    );
 }
 
 export function TicketForm({ applications }: TicketFormProps) {
@@ -77,8 +135,12 @@ export function TicketForm({ applications }: TicketFormProps) {
         description: state.message,
         variant: 'destructive',
       });
+      // Populate form errors from server
+      if (state.errors.files) {
+        form.setError('files', { type: 'server', message: state.errors.files[0] });
+      }
     }
-  }, [state, toast]);
+  }, [state, toast, form]);
   
 
   return (
@@ -173,19 +235,27 @@ export function TicketForm({ applications }: TicketFormProps) {
         <FormField
           control={form.control}
           name="files"
-          render={({ field }) => (
+          render={({ field: { onChange, onBlur, name, ref } }) => (
             <FormItem>
-              <FormLabel>Build Files / DB Scripts</FormLabel>
+              <FormLabel>Build Files / DB Scripts (.zip only)</FormLabel>
               <FormControl>
-                <Input type="file" {...form.register('files')} multiple />
+                <Input
+                  type="file"
+                  accept=".zip,application/zip,application/x-zip-compressed"
+                  onChange={(e) => onChange(e.target.files)}
+                  onBlur={onBlur}
+                  name={name}
+                  ref={ref}
+                />
               </FormControl>
               <FormDescription>
-                Upload any necessary files for the deployment.
+                Upload any necessary files for the deployment in a single zip file.
               </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
+        <UploadingUI />
         <div className="flex justify-end">
           <SubmitButton />
         </div>
