@@ -44,7 +44,9 @@ const ticketSchema = z.object({
   change_type: z.enum(["Hotfix", "Feature Release", "Bug Fix", "Configuration", "Other"], { required_error: 'Change type is required' }),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   files: z.any().refine(files => {
-    if (typeof window === 'undefined') return true; // Skip validation on server
+    // This validation runs on the client, where `FileList` is available.
+    // We skip this check on the server to prevent the 'File is not defined' error.
+    if (typeof window === 'undefined') return true;
     return !files || files.length === 0 || files instanceof FileList || Array.isArray(files);
   }, 'Files must be a list').optional(),
 });
