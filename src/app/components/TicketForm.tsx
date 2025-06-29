@@ -43,7 +43,10 @@ const ticketSchema = z.object({
   environment: z.enum(['QA', 'Prod'], { required_error: 'Environment is required' }),
   change_type: z.enum(["Hotfix", "Feature Release", "Bug Fix", "Configuration", "Other"], { required_error: 'Change type is required' }),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  files: z.any().optional(),
+  files: z.any().refine(files => {
+    if (typeof window === 'undefined') return true; // Skip validation on server
+    return !files || files.length === 0 || files instanceof FileList || Array.isArray(files);
+  }, 'Files must be a list').optional(),
 });
 
 type TicketFormValues = z.infer<typeof ticketSchema>;
@@ -90,7 +93,7 @@ export function TicketForm({ applications }: TicketFormProps) {
     const combinedFiles = [...currentFiles];
 
     newFiles.forEach(newFile => {
-        if (!currentFiles.some(currentFile => currentFile.name === newFile.name && currentFile.size === newFile.size)) {
+        if (!currentFiles.some((currentFile: File) => currentFile.name === newFile.name && currentFile.size === newFile.size)) {
             combinedFiles.push(newFile);
         }
     });
@@ -99,7 +102,7 @@ export function TicketForm({ applications }: TicketFormProps) {
 
   const removeFile = (indexToRemove: number) => {
     const currentFiles = form.getValues('files') || [];
-    const updatedFiles = currentFiles.filter((_, index) => index !== indexToRemove);
+    const updatedFiles = currentFiles.filter((_: any, index: number) => index !== indexToRemove);
     form.setValue('files', updatedFiles, { shouldValidate: true });
 
     if (fileInputRef.current) {
@@ -143,7 +146,7 @@ export function TicketForm({ applications }: TicketFormProps) {
                     ))}
                     </SelectContent>
                 </Select>
-                <input type="hidden" {...field} />
+                <input type="hidden" name={field.name} value={field.value || ''} />
                 <FormMessage>{state.errors?.application?.[0]}</FormMessage>
                 </FormItem>
             )}
@@ -165,7 +168,7 @@ export function TicketForm({ applications }: TicketFormProps) {
                     <SelectItem value="Prod">Production</SelectItem>
                     </SelectContent>
                 </Select>
-                 <input type="hidden" {...field} />
+                 <input type="hidden" name={field.name} value={field.value || ''} />
                 <FormMessage>{state.errors?.environment?.[0]}</FormMessage>
                 </FormItem>
             )}
@@ -190,7 +193,7 @@ export function TicketForm({ applications }: TicketFormProps) {
                     <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                 </Select>
-                <input type="hidden" {...field} />
+                <input type="hidden" name={field.name} value={field.value || ''} />
                 <FormMessage>{state.errors?.change_type?.[0]}</FormMessage>
                 </FormItem>
             )}
@@ -262,7 +265,7 @@ export function TicketForm({ applications }: TicketFormProps) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {stagedFiles.map((file, index) => (
+                                {stagedFiles.map((file: File, index) => (
                                     <TableRow key={`${file.name}-${file.lastModified}`}>
                                         <TableCell className="font-medium flex items-center gap-2 truncate">
                                             <FileText className="h-4 w-4 shrink-0" />
