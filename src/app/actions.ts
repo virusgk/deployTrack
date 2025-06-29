@@ -3,6 +3,7 @@
 
 import 'dotenv/config';
 import fs from 'fs/promises';
+import path from 'path';
 import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -86,23 +87,6 @@ export async function submitTicket(prevState: any, formData: FormData) {
     const deployedFiles: DeployedFile[] = [];
     const allowedTypes = ['application/zip', 'application/x-zip-compressed'];
 
-    for (const file of files) {
-        if (file instanceof File && file.size > 0) {
-            if (!allowedTypes.includes(file.type)) {
-                return {
-                    message: 'Validation failed',
-                    errors: { files: [`Invalid file type: ${file.name}. Only .zip files are allowed.`] }
-                };
-            }
-            // In a real app, you would upload the file here and get a URL/path
-            deployedFiles.push({
-                name: file.name,
-                path: `/uploads/${file.name}`, // mock path
-                download_url: '#', // mock url
-            });
-        }
-    }
-
     const applications = await getApplications();
     const selectedApp = applications.find(app => app.app_name === validatedFields.data.application);
 
@@ -118,6 +102,36 @@ export async function submitTicket(prevState: any, formData: FormData) {
         return {
             message: 'Shared drive access issue for the selected application. Please contact an admin.',
             errors: { application: [pathCheck.message] }
+        }
+    }
+
+    for (const file of files) {
+        if (file instanceof File && file.size > 0) {
+            if (!allowedTypes.includes(file.type)) {
+                return {
+                    message: 'Validation failed',
+                    errors: { files: [`Invalid file type: ${file.name}. Only .zip files are allowed.`] }
+                };
+            }
+
+            const buffer = Buffer.from(await file.arrayBuffer());
+            const filePath = path.join(selectedApp.storage_path, file.name);
+
+            try {
+                await fs.writeFile(filePath, buffer);
+            } catch(error) {
+                console.error("File write error:", error);
+                return {
+                    message: `Failed to save file: ${file.name}. Check server permissions for the storage path.`,
+                    errors: { files: [`Could not write file to storage.`] }
+                }
+            }
+
+            deployedFiles.push({
+                name: file.name,
+                path: filePath,
+                download_url: '#', // download not implemented yet
+            });
         }
     }
     

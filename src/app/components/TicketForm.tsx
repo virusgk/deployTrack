@@ -86,7 +86,6 @@ export function TicketForm({ applications }: TicketFormProps) {
       change_type: undefined,
       description: '',
       files: [],
-      ...state.values,
     },
   });
 
@@ -143,7 +142,7 @@ export function TicketForm({ applications }: TicketFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Application</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select an application" />
@@ -168,7 +167,7 @@ export function TicketForm({ applications }: TicketFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Environment</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select an environment" />
@@ -190,7 +189,7 @@ export function TicketForm({ applications }: TicketFormProps) {
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Change Type</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
                     <FormControl>
                     <SelectTrigger>
                         <SelectValue placeholder="Select the type of change" />
