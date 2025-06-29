@@ -1,7 +1,10 @@
+
 import { getTicketsByIp } from '@/app/actions';
 import { TicketTable } from '@/app/components/TicketTable';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/app/components/PageHeader';
+
+export const dynamic = 'force-dynamic';
 
 export default async function UserDashboardPage() {
   const tickets = await getTicketsByIp();
