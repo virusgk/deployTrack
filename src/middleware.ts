@@ -10,12 +10,16 @@ export function middleware(request: NextRequest) {
 
   // If user is not authenticated and trying to access admin, redirect to login
   if (isAuthPath && (!authCookie || authCookie.value !== authSecret)) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = '/login';
+    return NextResponse.redirect(loginUrl);
   }
 
   // If user is authenticated and trying to access login, redirect to admin
   if (isLoginPath && authCookie && authCookie.value === authSecret) {
-    return NextResponse.redirect(new URL('/admin', request.url));
+    const adminUrl = request.nextUrl.clone();
+    adminUrl.pathname = '/admin';
+    return NextResponse.redirect(adminUrl);
   }
 
   return NextResponse.next();
