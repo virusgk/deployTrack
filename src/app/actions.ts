@@ -16,9 +16,10 @@ async function getIpAddress(): Promise<string> {
   try {
     const headersList = headers();
     const headersObject: Record<string, string> = {};
-    headersList.forEach((value, key) => {
+    // Use a for...of loop for explicit iteration
+    for (const [key, value] of headersList.entries()) {
       headersObject[key] = value;
-    });
+    }
 
     // In development, the IP might be ::1, so we'll map it to localhost
     if (process.env.NODE_ENV === 'development' && (headersObject['x-forwarded-for'] === '::1' || !headersObject['x-forwarded-for'])) {
@@ -241,7 +242,8 @@ export async function login(prevState: any, formData: FormData) {
     if (!authSecret) {
         throw new Error('AUTH_SECRET environment variable is not set.');
     }
-    cookies().set('auth', authSecret, {
+    const cookieStore = cookies();
+    cookieStore.set('auth', authSecret, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       path: '/',
@@ -257,6 +259,7 @@ export async function login(prevState: any, formData: FormData) {
 }
 
 export async function logout() {
-  cookies().set('auth', '', { expires: new Date(0) });
+  const cookieStore = cookies();
+  cookieStore.set('auth', '', { expires: new Date(0) });
   redirect('/');
 }

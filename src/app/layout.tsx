@@ -15,7 +15,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const authCookie = cookies().get('auth');
+  const cookieStore = cookies();
+  const authCookie = cookieStore.get('auth');
   const isLoggedIn = authCookie?.value === process.env.AUTH_SECRET;
 
   return (
