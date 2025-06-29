@@ -43,17 +43,7 @@ const ticketSchema = z.object({
   environment: z.enum(['QA', 'Prod'], { required_error: 'Environment is required' }),
   change_type: z.enum(["Hotfix", "Feature Release", "Bug Fix", "Configuration", "Other"], { required_error: 'Change type is required' }),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  files: z
-    .array(
-      z.instanceof(File).refine(
-        (file) => {
-          const allowedTypes = ['application/zip', 'application/x-zip-compressed'];
-          return allowedTypes.includes(file.type);
-        },
-        'Only .zip files are allowed.'
-      )
-    )
-    .optional(),
+  files: z.any().optional(),
 });
 
 type TicketFormValues = z.infer<typeof ticketSchema>;
