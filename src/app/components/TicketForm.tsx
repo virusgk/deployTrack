@@ -157,7 +157,8 @@ export function TicketForm({ applications }: TicketFormProps) {
                     ))}
                     </SelectContent>
                 </Select>
-                <FormMessage>{state.errors?.application}</FormMessage>
+                <input type="hidden" {...field} />
+                <FormMessage>{state.errors?.application?.[0]}</FormMessage>
                 </FormItem>
             )}
             />
@@ -178,7 +179,8 @@ export function TicketForm({ applications }: TicketFormProps) {
                     <SelectItem value="Prod">Production</SelectItem>
                     </SelectContent>
                 </Select>
-                <FormMessage>{state.errors?.environment}</FormMessage>
+                 <input type="hidden" {...field} />
+                <FormMessage>{state.errors?.environment?.[0]}</FormMessage>
                 </FormItem>
             )}
             />
@@ -202,7 +204,8 @@ export function TicketForm({ applications }: TicketFormProps) {
                     <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                 </Select>
-                <FormMessage>{state.errors?.change_type}</FormMessage>
+                <input type="hidden" {...field} />
+                <FormMessage>{state.errors?.change_type?.[0]}</FormMessage>
                 </FormItem>
             )}
             />
@@ -219,7 +222,7 @@ export function TicketForm({ applications }: TicketFormProps) {
                     {...field}
                     />
                 </FormControl>
-                <FormMessage>{state.errors?.description}</FormMessage>
+                <FormMessage>{state.errors?.description?.[0]}</FormMessage>
                 </FormItem>
             )}
             />
