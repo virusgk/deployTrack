@@ -14,7 +14,7 @@ import type { Ticket, Application, TicketStatus, DeployedFile } from '@/lib/type
 
 async function getIpAddress(): Promise<string> {
   try {
-    const headersList = headers();
+    const headersList = await headers();
     const headersObject: Record<string, string> = {};
     // Use a for...of loop for explicit iteration
     for (const [key, value] of headersList.entries()) {
@@ -242,7 +242,7 @@ export async function login(prevState: any, formData: FormData) {
     if (!authSecret) {
         throw new Error('AUTH_SECRET environment variable is not set.');
     }
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     cookieStore.set('auth', authSecret, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -259,7 +259,7 @@ export async function login(prevState: any, formData: FormData) {
 }
 
 export async function logout() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('auth', '', { expires: new Date(0) });
   redirect('/');
 }
