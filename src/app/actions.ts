@@ -130,7 +130,7 @@ export async function submitTicket(prevState: any, formData: FormData) {
             deployedFiles.push({
                 name: file.name,
                 path: filePath,
-                download_url: '#', // download not implemented yet
+                download_url: `/api/download?path=${encodeURIComponent(filePath)}`,
             });
         }
     }

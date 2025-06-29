@@ -112,12 +112,10 @@ export function TicketForm({ applications }: TicketFormProps) {
     const updatedFiles = currentFiles.filter((_, index) => index !== indexToRemove);
     form.setValue('files', updatedFiles, { shouldValidate: true });
 
-    // Clear the file input so the same file can be re-added if needed
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
   };
-
 
   useEffect(() => {
     if (state.message && state.errors && Object.keys(state.errors).length > 0) {
@@ -126,7 +124,6 @@ export function TicketForm({ applications }: TicketFormProps) {
         description: state.message,
         variant: 'destructive',
       });
-      // Populate form errors from server
       if (state.errors.files) {
         form.setError('files', { type: 'server', message: state.errors.files[0] });
       }

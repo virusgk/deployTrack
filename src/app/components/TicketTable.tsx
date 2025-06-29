@@ -13,12 +13,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Button } from '@/components/ui/button';
 import { TicketStatusBadge } from './TicketStatusBadge';
 import { formatDistanceToNow } from 'date-fns';
-import { MoreHorizontal, Download, Server, FlaskConical, CircleDot, Flame, PartyPopper, Bug, Settings, Info } from 'lucide-react';
+import { MoreHorizontal, Download, Server, FlaskConical, CircleDot, Flame, PartyPopper, Bug, Settings, Info, FileText } from 'lucide-react';
 import type { Ticket, TicketStatus, ChangeType } from '@/lib/types';
 import { updateTicketStatus } from '@/app/actions';
 import { useToast } from "@/hooks/use-toast"
@@ -124,11 +128,25 @@ export function TicketTable({ tickets, isAdmin = false }: TicketTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    {ticket.files.length > 0 && (
-                      <DropdownMenuItem>
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Files
-                      </DropdownMenuItem>
+                    {isAdmin && ticket.files.length > 0 && (
+                       <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                          <Download className="mr-2 h-4 w-4" />
+                          <span>Download Files</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                          <DropdownMenuSubContent>
+                            {ticket.files.map((file) => (
+                              <DropdownMenuItem key={file.path} asChild>
+                                <a href={file.download_url} download={file.name}>
+                                  <FileText className="mr-2 h-4 w-4" />
+                                  <span>{file.name}</span>
+                                </a>
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
                     )}
                     {isAdmin && (
                       <>
